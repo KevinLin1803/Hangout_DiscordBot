@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Copy, X } from "lucide-react"
 import {saveAvailability} from "../../../backend/functions.ts"
+import { useParams } from "react-router-dom";
 
 type AvailabilityStatus = "available" | "unavailable" | "if-needed"
 
@@ -40,6 +41,8 @@ export default function AvailabilityCalendar() {
     { time: "10 PM", value: 22 },
     { time: "11 PM", value: 23 },
   ]
+
+  var { eventId } = useParams<{ eventId?: string }>();
 
   useEffect(() => {
     // Initialize calendar data with empty slots for each day
@@ -133,11 +136,14 @@ export default function AvailabilityCalendar() {
     //   availability: calendarData
     // }
 
-    saveAvailability("eventId123", "userId456", "Kevin", calendarData)
+    if (!eventId) {
+      eventId = "default-event-id" // Fallback if no eventId is provided  
+    }
+
+    saveAvailability(eventId, "userId456", "Kevin", calendarData)
 
     // Just gotta send this data over to the backend now basically :)
     alert("Availability saved! Check console for data structure.")
-
   }
 
   const handleCopyLink = () => {
