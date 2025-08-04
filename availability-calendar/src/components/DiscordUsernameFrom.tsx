@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams} from "react-router-dom"
 import { User, ArrowRight } from "lucide-react"
 
 interface DiscordUsernameFormProps {
@@ -22,6 +22,8 @@ export default function DiscordUsernameForm({ onSubmit }: DiscordUsernameFormPro
     const discordUsernameRegex = /^(?!.*\.{2})[a-zA-Z0-9._]{2,32}(?<!\.)$/
     return discordUsernameRegex.test(username)
   }
+
+  var { eventId } = useParams<{ eventId?: string }>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,7 +48,7 @@ export default function DiscordUsernameForm({ onSubmit }: DiscordUsernameFormPro
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       // PLAN: Store username in localstorage (go to availability calendar page first) -> if we don't have discord username -> then we redirect to this page
-      localStorage.setItem("discordUsername", username)
+      localStorage.setItem("discordUserName", username)
 
       // Call the onSubmit callback if provided
       if (onSubmit) {
@@ -54,7 +56,7 @@ export default function DiscordUsernameForm({ onSubmit }: DiscordUsernameFormPro
       }
 
       // Navigate to calendar page
-      navigate("/calendar", { state: { discordUsername: username } })
+      navigate(`/calendar/${eventId}`)
     } catch (err) {
       setError("Something went wrong. Please try again.")
     } finally {

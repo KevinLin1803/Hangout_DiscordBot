@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "A Discord bot for creating custom polls with vote tracking",
   "type": "module",
-  "main": "dist/botv2.js",
+  "main": "dist/bot.js",
   "scripts": {
-    "start": "node dist/botv2.js",
-    "dev": "tsx watch src/botv2.ts",
+    "start": "node dist/bot.js",
+    "dev": "tsx watch src/bot.ts",
     "build": "tsc",
     "clean": "rimraf dist"
   },
@@ -15,7 +15,8 @@
     "class-variance-authority": "^0.7.1",
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
-    "firebase": "^12.0.0"
+    "firebase": "^12.0.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

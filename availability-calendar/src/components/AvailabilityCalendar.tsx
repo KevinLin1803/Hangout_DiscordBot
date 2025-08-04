@@ -3,27 +3,20 @@
 import React, { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Copy, X } from "lucide-react"
-import {saveAvailability} from "../../../backend/functions.ts"
-import { useParams } from "react-router-dom";
+import {saveAvailability, getAvailabilities} from "../../../src/backend/functions"
+import { useParams, useNavigate } from "react-router-dom";
 
 type AvailabilityStatus = "available" | "unavailable" | "if-needed"
 
 export default function AvailabilityCalendar() {
+
   const [selectedMode, setSelectedMode] = useState<AvailabilityStatus>("available")
   const [calendarData, setCalendarData] = useState<Map<String, Number[]>>(new Map<String, Number[]>())
-
+  const [days, setDays] = useState<{ short: string; date: string }[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [showNotification, setShowNotification] = useState(true)
-
-  const days = [
-    { short: "Sun", full: "Sunday", date: "Jul 13" },
-    { short: "Mon", full: "Monday", date: "Jul 14" },
-    { short: "Tue", full: "Tuesday", date: "Jul 15" },
-    { short: "Wed", full: "Wednesday", date: "Jul 16" },
-    { short: "Thu", full: "Thursday", date: "Jul 17" },
-    { short: "Fri", full: "Friday", date: "Jul 18" },
-    { short: "Sat", full: "Saturday", date: "Jul 19" },
-  ]
+  const [username, setUserName] = useState<String>("")
+  const navigate = useNavigate();
 
   const timeSlots = [
     { time: "10 AM", value: 10 },
@@ -42,10 +35,27 @@ export default function AvailabilityCalendar() {
     { time: "11 PM", value: 23 },
   ]
 
-  var { eventId } = useParams<{ eventId?: string }>();
+  var { eventId } = useParams<{ eventId: string }>();
 
+  // Get discord username
+  useEffect( () => {
+    var discordTag = localStorage.getItem("discordUserName")
+
+    if (discordTag == null) {
+      console.log("are we trying?")
+      navigate(`/${eventId}`)
+    } else {
+      setUserName(discordTag)
+    }
+  }, [])
+
+  // Initialize calendar
+    // Calendar size
+    // Empty caldendar slots
   useEffect(() => {
-    // Initialize calendar data with empty slots for each day
+    // I need to get the current availabilities
+    // I also need to get the end and start dates
+    const currentAvailabilities = getAvailabilities(eventId || "default-event-id")
     const initialData = new Map<string, number[]>()
     days.forEach((day) => {
       initialData.set(day.short, [])
@@ -68,15 +78,6 @@ export default function AvailabilityCalendar() {
         return "bg-red-200 hover:bg-red-300"
     }
   }
-
-  // UNDERSTANDING REACT DEEEPLY (I kinda wanna research this stuff a bit more. Really master it)
-    // If it's something I'm going to be using a lot, I should recreate it
-  // memoised = cached
-  // React can help you to memoise
-  // Renders = converting virutal DOM(jsx) to real DOM
-  // useCallback is used to memoize the function so it doesn't get recreated on every render, useLayoutEffect () => React is pretty complicated and interesting
-  // Benefits: Optimising performance because it's one less thing to render, more stable use in useEffects (component re-renders, may trigger useeffects. this will ensure our useEffect isn't called)
-  // Costs:
 
   const handleSlotInteraction = (day: string, timeValue: number)  => {
       const currentStatus = getSlotStatus(day, timeValue)
@@ -129,13 +130,6 @@ export default function AvailabilityCalendar() {
   }
 
   const handleSave = () => {
-    // Convert calendar data to a more structured format for backend
-    // const availabilityData = {
-    //   eventTitle: "Let's meet gang",
-    //   dateRange: "7/13 - 7/19",
-    //   availability: calendarData
-    // }
-
     if (!eventId) {
       eventId = "default-event-id" // Fallback if no eventId is provided  
     }
@@ -151,10 +145,6 @@ export default function AvailabilityCalendar() {
     alert("Link copied to clipboard!")
   }
 
-  // SO MUCH TOO LEARN
-    // AUTOMATED TESTING -> WHAT ARE THE DIFFERENT KINDS OF TESTS YOU CAN CREATE? ADD THIS IN WITH AI?
-    // CLEAN CODE BOOK (small functions, good variable names -> self explanatory code -> easy to read/understand)
-    // Never hurts to know what the good stuff is
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
@@ -236,7 +226,7 @@ export default function AvailabilityCalendar() {
         {/* Sidebar */}
         <div className="w-64 space-y-4">
           <div>
-            <p className="text-sm text-gray-600 italic mb-3">Adding availability as a guest</p>
+            <p className="text-sm text-gray-600 italic mb-3">Adding availability as {username}</p>
 
             <div className="flex gap-2 mb-4">
               <Button
@@ -296,4 +286,7 @@ export default function AvailabilityCalendar() {
   )
 }
 
-
+// SO MUCH TOO LEARN
+  // AUTOMATED TESTING -> WHAT ARE THE DIFFERENT KINDS OF TESTS YOU CAN CREATE? ADD THIS IN WITH AI?
+  // CLEAN CODE BOOK (small functions, good variable names -> self explanatory code -> easy to read/understand)
+  // Never hurts to know what the good stuff is
