@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Copy, X } from "lucide-react"
-import {saveAvailability, getAvailabilities} from "../../../src/backend/functions"
+import {saveAvailability, getAvailabilities, getEventDetails} from "../../../src/backend/functions"
 import { useParams, useNavigate } from "react-router-dom";
 
 type AvailabilityStatus = "available" | "unavailable" | "if-needed"
@@ -42,7 +42,6 @@ export default function AvailabilityCalendar() {
     var discordTag = localStorage.getItem("discordUserName")
 
     if (discordTag == null) {
-      console.log("are we trying?")
       navigate(`/${eventId}`)
     } else {
       setUserName(discordTag)
@@ -53,15 +52,66 @@ export default function AvailabilityCalendar() {
     // Calendar size
     // Empty caldendar slots
   useEffect(() => {
-    // I need to get the current availabilities
-    // I also need to get the end and start dates
-    const currentAvailabilities = getAvailabilities(eventId || "default-event-id")
+    // Let's do the easier task of getting the start and end dates to figure out the size of the calendar
+      // I think we can do a view other people's calendars after you submit kind of deal
+      // I also need to clean up the codebase a bit and put them into different files
+      // Different files then try creating some unit tests into system integration test
+    
+    const dates = getEventDetails(eventId || "default-event-id");
+    
     const initialData = new Map<string, number[]>()
     days.forEach((day) => {
       initialData.set(day.short, [])
     })
     setCalendarData(initialData)
   }, [])
+
+  async function getEventDetails(eventId: string) {
+    try {
+      const details = await getEventDetails(eventId);
+      setDays(parseDateRangeToDays(details.startDate, details.endDate));
+    } catch (error) {
+      console.error("Error fetching event details:", error);
+    } 
+  }
+
+  function parseDateRangeToDays(startStr: string, endStr: string): { short: string, date: string }[] {
+    const currentYear = new Date().getFullYear();
+
+    const parseToDate = (dateStr: string): Date => {
+      const [day, month] = dateStr.split("/").map(Number);
+      return new Date(currentYear, month - 1, day); // Month is 0-based
+    };
+
+    const formatDate = (date: Date): string => {
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      return `${day}/${month}`;
+    };
+
+    const getShortDay = (date: Date): string => {
+      return date.toLocaleDateString("en-AU", { weekday: "short" }); // e.g., "Tue"
+    };
+
+    const startDate = parseToDate(startStr);
+    const endDate = parseToDate(endStr);
+    const result: { short: string; date: string }[] = [];
+
+    const current = new Date(startDate);
+
+    while (current <= endDate) {
+      result.push({
+        short: getShortDay(current),
+        date: formatDate(current),
+      });
+
+      // Increment by 1 day
+      current.setDate(current.getDate() + 1);
+    }
+
+    return result;
+  }
+
 
   const getSlotStatus = (day: string, timeValue: number): AvailabilityStatus => {
     return calendarData.get(day)?.includes(timeValue)? "available" : "unavailable"
