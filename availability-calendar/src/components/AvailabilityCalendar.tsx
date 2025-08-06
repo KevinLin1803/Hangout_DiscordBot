@@ -51,13 +51,8 @@ export default function AvailabilityCalendar() {
   // Initialize calendar
     // Calendar size
     // Empty caldendar slots
-  useEffect(() => {
-    // Let's do the easier task of getting the start and end dates to figure out the size of the calendar
-      // I think we can do a view other people's calendars after you submit kind of deal
-      // I also need to clean up the codebase a bit and put them into different files
-      // Different files then try creating some unit tests into system integration test
-    
-    const dates = getEventDetails(eventId || "default-event-id");
+  useEffect(() => {    
+    getEventDates(eventId || "default-event-id");
     
     const initialData = new Map<string, number[]>()
     days.forEach((day) => {
@@ -66,13 +61,15 @@ export default function AvailabilityCalendar() {
     setCalendarData(initialData)
   }, [])
 
-  async function getEventDetails(eventId: string) {
+  async function getEventDates(eventId: string) {
     try {
       const details = await getEventDetails(eventId);
-      setDays(parseDateRangeToDays(details.startDate, details.endDate));
+      const calendarDays = parseDateRangeToDays(details.startDate, details.endDate);
+      setDays(calendarDays);
+      console.log("Event dates set:", calendarDays);
     } catch (error) {
       console.error("Error fetching event details:", error);
-    } 
+    }
   }
 
   function parseDateRangeToDays(startStr: string, endStr: string): { short: string, date: string }[] {
@@ -108,6 +105,8 @@ export default function AvailabilityCalendar() {
       // Increment by 1 day
       current.setDate(current.getDate() + 1);
     }
+
+    console.log(result.length, "days in range")
 
     return result;
   }
@@ -196,6 +195,7 @@ export default function AvailabilityCalendar() {
   }
 
 
+  // Should try to show 5 days. And if it can't then allgs :)
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
       {/* Header */}
@@ -203,8 +203,10 @@ export default function AvailabilityCalendar() {
         <div>
           <h1 className="text-3xl font-bold mb-2">{"Let's meet gang"}</h1>
           <div className="flex items-center gap-2 text-gray-600">
-            <span>7/13 - 7/19</span>
-            <button className="text-green-600 hover:underline">Edit event</button>
+            {/* <span>{days[0].date} - {days[days.length - 1].date}</span> */}
+            {days.length > 0 && (
+              <span>{days[0].date} - {days[days.length - 1].date}</span>
+            )}
           </div>
         </div>
 
@@ -223,7 +225,8 @@ export default function AvailabilityCalendar() {
       <div className="flex gap-6">
         {/* Calendar Grid */}
         <div className="flex-1">
-          <div className="grid grid-cols-8 gap-0 border border-gray-300 rounded-lg overflow-hidden">
+          {/* Stuck */}
+          <div className= {`grid grid-cols-${Math.min(days.length + 1, 8)} gap-0 border border-gray-300 rounded-lg overflow-hidden`}>
             {/* Header Row */}
             <div className="bg-gray-50 p-3"></div>
             {days.map((day) => (
@@ -232,11 +235,11 @@ export default function AvailabilityCalendar() {
                 <div className="font-semibold">{day.short}</div>
               </div>
             ))}
-
+{/* Why is it splitting in half right now? --> I think not being able to view other peeps availabilities is fine. Additional feature to add if useful */}
             {/* Time Slots */}
             {timeSlots.map((slot) => (
               <React.Fragment key={slot.value}>
-                <div className="bg-gray-50 p-3 text-sm font-medium border-t border-gray-300 flex items-center">
+                <div className="bg-gray-50 p-3 text-sm font-medium border-t border-gray-300 flex items-center justify-center">
                   {slot.time}
                 </div>
                 {days.map((day) => {
@@ -323,14 +326,12 @@ export default function AvailabilityCalendar() {
         <div className="flex items-center gap-4">
           <span>Shown in</span>
           <select className="border border-gray-300 rounded px-2 py-1">
-            <option>(GMT+10:00) Canberra, ...</option>
+            <option>(GMT+10:00) AEST, ...</option>
           </select>
           <select className="border border-gray-300 rounded px-2 py-1">
             <option>12h</option>
-            <option>24h</option>
           </select>
         </div>
-        <button className="hover:underline">Privacy Policy</button>
       </div>
     </div>
   )
