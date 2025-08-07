@@ -13,6 +13,7 @@ export default function AvailabilityCalendar() {
   const [selectedMode, setSelectedMode] = useState<AvailabilityStatus>("available")
   const [calendarData, setCalendarData] = useState<Map<String, Number[]>>(new Map<String, Number[]>())
   const [days, setDays] = useState<{ short: string; date: string }[]>([])
+  const [visibleDays, setVisibleDays] = useState<number>(1) // Number of days to show in the calendar
   const [isDragging, setIsDragging] = useState(false)
   const [showNotification, setShowNotification] = useState(true)
   const [username, setUserName] = useState<String>("")
@@ -62,7 +63,7 @@ export default function AvailabilityCalendar() {
       const details = await getEventDetails(eventId);
       const calendarDays = parseDateRangeToDays(details.startDate, details.endDate);
       setDays(calendarDays);
-      console.log(days);
+      setVisibleDays(Math.min(calendarDays.length + 1, 8));
     } catch (error) {
       console.error("Error fetching event details:", error);
     }
@@ -102,15 +103,10 @@ export default function AvailabilityCalendar() {
       current.setDate(current.getDate() + 1);
     }
 
-    console.log(Math.min(days.length + 1, 8));
-
     return result;
   }
-
-  // Let's clarify the current issue
-    // I am trying to dynamically set the number of columns in my calendar grid using numDays (a react State I define)
-    // I fetch and set the value of numDays in a useEffect hook
-    // However, the number of grid columns remains at 1 and doesn't change based on numDays
+  
+  // Another learning: Sometimes you learnt the right thing you just got the syntax wrong 
 
   const getSlotStatus = (day: string, timeValue: number): AvailabilityStatus => {
     return calendarData.get(day)?.includes(timeValue)? "available" : "unavailable"
@@ -230,27 +226,30 @@ export default function AvailabilityCalendar() {
           <div
             className = {`grid gap-0 border border-gray-300 rounded-lg overflow-hidden`}
             style = {{
+              // When the number of visibel days shrink this needs to shrink with it too :)
               gridTemplateColumns: `repeat(${Math.min(days.length + 1, 8)}, 1fr)`,
             }}
            >
             {/* Header Row */}
             <div className="bg-gray-50 p-3"></div>
-            {days.map((day) => (
+            {days.map((day, index) => (
+              index >= visibleDays - 8 && index < visibleDays - 1 && 
               <div key={day.short} className="bg-gray-50 p-3 text-center border-l border-gray-300">
                 <div className="text-sm text-gray-600">{day.date}</div>
                 <div className="font-semibold">{day.short}</div>
               </div>
             ))}
-{/* Why is it splitting in half right now? --> I think not being able to view other peeps availabilities is fine. Additional feature to add if useful */}
+
             {/* Time Slots */}
             {timeSlots.map((slot) => (
               <React.Fragment key={slot.value}>
                 <div className="bg-gray-50 p-3 text-sm font-medium border-t border-gray-300 flex items-center justify-center">
                   {slot.time}
                 </div>
-                {days.map((day) => {
+                {days.map((day, index) => {
                   const status = getSlotStatus(day.short, slot.value)
                   return (
+                    index >= visibleDays - 8 && index < visibleDays - 1 && 
                     <div
                       key={`${day.short}-${slot.value}`}
                       className={`h-12 border-l border-t border-gray-300 cursor-pointer select-none ${getSlotColor(status)} transition-colors`}
@@ -286,6 +285,24 @@ export default function AvailabilityCalendar() {
         <div className="w-64 space-y-4">
           <div>
             <p className="text-sm text-gray-600 italic mb-3">Adding availability as {username}</p>
+              <Button
+                variant={selectedMode === "if-needed" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setVisibleDays((prev)=> prev + 7)}
+                className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
+              >
+                Next week
+              </Button>
+              <Button
+                variant={selectedMode === "if-needed" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setVisibleDays((prev) => Math.max(prev - 7, 1))}
+                className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
+              >
+                Prev week
+              </Button>
+
+
 
             <div className="flex gap-2 mb-4">
               <Button
