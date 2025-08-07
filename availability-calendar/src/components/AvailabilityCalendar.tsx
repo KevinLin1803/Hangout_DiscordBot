@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useLayoutEffect } from "react"
 import { Button } from "./ui/button"
 import { Copy, X } from "lucide-react"
 import {saveAvailability, getAvailabilities, getEventDetails} from "../../../src/backend/functions"
@@ -48,12 +48,8 @@ export default function AvailabilityCalendar() {
     }
   }, [])
 
-  // Initialize calendar
-    // Calendar size
-    // Empty caldendar slots
-  useEffect(() => {    
-    getEventDates(eventId || "default-event-id");
-    
+  useEffect(() => {
+    getEventDates(eventId || "Default event ID"); 
     const initialData = new Map<string, number[]>()
     days.forEach((day) => {
       initialData.set(day.short, [])
@@ -66,7 +62,7 @@ export default function AvailabilityCalendar() {
       const details = await getEventDetails(eventId);
       const calendarDays = parseDateRangeToDays(details.startDate, details.endDate);
       setDays(calendarDays);
-      console.log("Event dates set:", calendarDays);
+      console.log(days);
     } catch (error) {
       console.error("Error fetching event details:", error);
     }
@@ -106,11 +102,15 @@ export default function AvailabilityCalendar() {
       current.setDate(current.getDate() + 1);
     }
 
-    console.log(result.length, "days in range")
+    console.log(Math.min(days.length + 1, 8));
 
     return result;
   }
 
+  // Let's clarify the current issue
+    // I am trying to dynamically set the number of columns in my calendar grid using numDays (a react State I define)
+    // I fetch and set the value of numDays in a useEffect hook
+    // However, the number of grid columns remains at 1 and doesn't change based on numDays
 
   const getSlotStatus = (day: string, timeValue: number): AvailabilityStatus => {
     return calendarData.get(day)?.includes(timeValue)? "available" : "unavailable"
@@ -183,7 +183,8 @@ export default function AvailabilityCalendar() {
       eventId = "default-event-id" // Fallback if no eventId is provided  
     }
 
-    saveAvailability(eventId, "userId456", "Kevin", calendarData)
+    var discordTag = localStorage.getItem("discordUserName") || "No tag provided";
+    saveAvailability(eventId, discordTag, calendarData)
 
     // Just gotta send this data over to the backend now basically :)
     alert("Availability saved! Check console for data structure.")
@@ -193,7 +194,6 @@ export default function AvailabilityCalendar() {
     navigator.clipboard.writeText(window.location.href)
     alert("Link copied to clipboard!")
   }
-
 
   // Should try to show 5 days. And if it can't then allgs :)
   return (
@@ -225,8 +225,14 @@ export default function AvailabilityCalendar() {
       <div className="flex gap-6">
         {/* Calendar Grid */}
         <div className="flex-1">
-          {/* Stuck */}
-          <div className= {`grid grid-cols-${Math.min(days.length + 1, 8)} gap-0 border border-gray-300 rounded-lg overflow-hidden`}>
+          {/* Stuck -> arbitrary tailwind variables seem to be good for specific values []*/}
+          {/* {Just using css} */}
+          <div
+            className = {`grid gap-0 border border-gray-300 rounded-lg overflow-hidden`}
+            style = {{
+              gridTemplateColumns: `repeat(${Math.min(days.length + 1, 8)}, 1fr)`,
+            }}
+           >
             {/* Header Row */}
             <div className="bg-gray-50 p-3"></div>
             {days.map((day) => (

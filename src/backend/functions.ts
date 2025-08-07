@@ -26,11 +26,10 @@ export async function createEvent(
 
 export async function saveAvailability(
   eventId: string,
-  userId: string,
   username: string,
   times: Map<String, Number[]>
 ): Promise<void> {
-  const ref = doc(db, `events/${eventId}/availabilities/${userId}`);
+  const ref = doc(db, `events/${eventId}/availabilities/${username}`);
   // Convert Map to an array of strings for Firestore
   const availabilities = Object.fromEntries(times);
   await setDoc(ref, {
