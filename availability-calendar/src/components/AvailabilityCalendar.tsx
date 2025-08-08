@@ -136,6 +136,9 @@ export default function AvailabilityCalendar() {
         newStatus = selectedMode
       }
 
+      console.log(visibleDays % 8 == 0 ? 8: visibleDays % 8);
+      console.log(visibleDays)
+
       // Update calendar data depending on selected mode
       setCalendarData((prev) => {
         const updatedSlots = prev.get(day) || []
@@ -191,6 +194,17 @@ export default function AvailabilityCalendar() {
     alert("Link copied to clipboard!")
   }
 
+  const displayCalendarDays = () => {
+    if (visibleDays > days.length) {
+      return days.length % 7 + 1;
+    } else {
+      // On the second full one, we're doing 15 % 7. Cuz visible days is 15
+        // I could change visibleDays to be 7 (get rid of the + 1 - 1 stuff)
+        // Let's try that
+      return visibleDays % 8 == 0 ? 8: visibleDays % 8;
+    }
+  }
+
   // Should try to show 5 days. And if it can't then allgs :)
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
@@ -199,7 +213,6 @@ export default function AvailabilityCalendar() {
         <div>
           <h1 className="text-3xl font-bold mb-2">{"Let's meet gang"}</h1>
           <div className="flex items-center gap-2 text-gray-600">
-            {/* <span>{days[0].date} - {days[days.length - 1].date}</span> */}
             {days.length > 0 && (
               <span>{days[0].date} - {days[days.length - 1].date}</span>
             )}
@@ -227,7 +240,11 @@ export default function AvailabilityCalendar() {
             className = {`grid gap-0 border border-gray-300 rounded-lg overflow-hidden`}
             style = {{
               // When the number of visibel days shrink this needs to shrink with it too :)
-              gridTemplateColumns: `repeat(${Math.min(days.length + 1, 8)}, 1fr)`,
+              // Good code quality = visibleDays = all the visible days tbh
+
+              // When visible days < 7
+              // When visisble days > 7
+              gridTemplateColumns: `repeat(${displayCalendarDays()}, 1fr)`,
             }}
            >
             {/* Header Row */}
@@ -288,7 +305,7 @@ export default function AvailabilityCalendar() {
               <Button
                 variant={selectedMode === "if-needed" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setVisibleDays((prev)=> prev + 7)}
+                onClick={() => setVisibleDays((prev) => prev> days.length ? prev: prev + 7)}
                 className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
               >
                 Next week
@@ -296,13 +313,16 @@ export default function AvailabilityCalendar() {
               <Button
                 variant={selectedMode === "if-needed" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setVisibleDays((prev) => Math.max(prev - 7, 1))}
+                // The issue right now is that if the number of days we collecting availability for is less than 7
+                // if we press prev week -> it'll go to 8 days
+                // If i choose math.min, it just won't show like any days
+                // No right now, I'm using visisbleDays as an index for the range of days within days we can display
+                // Could clamp it within the closest multiple of 7 -> I could do visisble days % 7 + 1 (would work for everyhting but multiples of 7/14)
+                onClick={() => setVisibleDays((prev) => days.length > 7? Math.max(prev - 7, 8): prev)}
                 className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
               >
                 Prev week
               </Button>
-
-
 
             <div className="flex gap-2 mb-4">
               <Button
