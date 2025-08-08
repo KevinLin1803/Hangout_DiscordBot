@@ -13,7 +13,7 @@ export default function AvailabilityCalendar() {
   const [selectedMode, setSelectedMode] = useState<AvailabilityStatus>("available")
   const [calendarData, setCalendarData] = useState<Map<String, Number[]>>(new Map<String, Number[]>())
   const [days, setDays] = useState<{ short: string; date: string }[]>([])
-  const [visibleDays, setVisibleDays] = useState<number>(1) // Number of days to show in the calendar
+  const [visibleDays, setVisibleDays] = useState<number>(0) // Number of days to show in the calendar
   const [isDragging, setIsDragging] = useState(false)
   const [showNotification, setShowNotification] = useState(true)
   const [username, setUserName] = useState<String>("")
@@ -63,7 +63,8 @@ export default function AvailabilityCalendar() {
       const details = await getEventDetails(eventId);
       const calendarDays = parseDateRangeToDays(details.startDate, details.endDate);
       setDays(calendarDays);
-      setVisibleDays(Math.min(calendarDays.length + 1, 8));
+      setVisibleDays(Math.min(calendarDays.length, 7));
+      console.log(calendarDays);
     } catch (error) {
       console.error("Error fetching event details:", error);
     }
@@ -136,7 +137,6 @@ export default function AvailabilityCalendar() {
         newStatus = selectedMode
       }
 
-      console.log(visibleDays % 8 == 0 ? 8: visibleDays % 8);
       console.log(visibleDays)
 
       // Update calendar data depending on selected mode
@@ -195,14 +195,7 @@ export default function AvailabilityCalendar() {
   }
 
   const displayCalendarDays = () => {
-    if (visibleDays > days.length) {
-      return days.length % 7 + 1;
-    } else {
-      // On the second full one, we're doing 15 % 7. Cuz visible days is 15
-        // I could change visibleDays to be 7 (get rid of the + 1 - 1 stuff)
-        // Let's try that
-      return visibleDays % 8 == 0 ? 8: visibleDays % 8;
-    }
+    return (visibleDays > days.length || days.length < 7) ? days.length % 7 + 1: 8;
   }
 
   // Should try to show 5 days. And if it can't then allgs :)
@@ -250,7 +243,7 @@ export default function AvailabilityCalendar() {
             {/* Header Row */}
             <div className="bg-gray-50 p-3"></div>
             {days.map((day, index) => (
-              index >= visibleDays - 8 && index < visibleDays - 1 && 
+              index >= visibleDays - 7 && index < visibleDays && 
               <div key={day.short} className="bg-gray-50 p-3 text-center border-l border-gray-300">
                 <div className="text-sm text-gray-600">{day.date}</div>
                 <div className="font-semibold">{day.short}</div>
@@ -266,7 +259,7 @@ export default function AvailabilityCalendar() {
                 {days.map((day, index) => {
                   const status = getSlotStatus(day.short, slot.value)
                   return (
-                    index >= visibleDays - 8 && index < visibleDays - 1 && 
+                    index >= visibleDays - 7 && index < visibleDays && 
                     <div
                       key={`${day.short}-${slot.value}`}
                       className={`h-12 border-l border-t border-gray-300 cursor-pointer select-none ${getSlotColor(status)} transition-colors`}
@@ -278,6 +271,33 @@ export default function AvailabilityCalendar() {
                 })}
               </React.Fragment>
             ))}
+          </div>
+
+          {/* Next and prev week buttons */}
+          <div className="flex justify-between">
+              <Button
+                variant={selectedMode === "if-needed" ? "default" : "outline"}
+                size="sm"
+                // The issue right now is that if the number of days we collecting availability for is less than 7
+                // if we press prev week -> it'll go to 8 days
+                // If i choose math.min, it just won't show like any days
+                // No right now, I'm using visisbleDays as an index for the range of days within days we can display
+                // Could clamp it within the closest multiple of 7 -> I could do visisble days % 7 + 1 (would work for everyhting but multiples of 7/14)
+                onClick={() => setVisibleDays((prev) => days.length > 7? Math.max(prev - 7, 7): prev)}
+                className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
+              >
+                Prev week
+              </Button>
+
+              <Button
+                variant={selectedMode === "if-needed" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setVisibleDays((prev) => prev >= days.length ? prev: prev + 7)}
+                className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
+              >
+                Next week
+              </Button>
+
           </div>
 
           {/* Notification */}
@@ -302,27 +322,6 @@ export default function AvailabilityCalendar() {
         <div className="w-64 space-y-4">
           <div>
             <p className="text-sm text-gray-600 italic mb-3">Adding availability as {username}</p>
-              <Button
-                variant={selectedMode === "if-needed" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setVisibleDays((prev) => prev> days.length ? prev: prev + 7)}
-                className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
-              >
-                Next week
-              </Button>
-              <Button
-                variant={selectedMode === "if-needed" ? "default" : "outline"}
-                size="sm"
-                // The issue right now is that if the number of days we collecting availability for is less than 7
-                // if we press prev week -> it'll go to 8 days
-                // If i choose math.min, it just won't show like any days
-                // No right now, I'm using visisbleDays as an index for the range of days within days we can display
-                // Could clamp it within the closest multiple of 7 -> I could do visisble days % 7 + 1 (would work for everyhting but multiples of 7/14)
-                onClick={() => setVisibleDays((prev) => days.length > 7? Math.max(prev - 7, 8): prev)}
-                className={selectedMode === "if-needed" ? "bg-gray-600 hover:bg-gray-700" : ""}
-              >
-                Prev week
-              </Button>
 
             <div className="flex gap-2 mb-4">
               <Button
