@@ -1,0 +1,16 @@
+export const timeSlots = [
+    { time: "10 AM", value: 10 },
+    { time: "11 AM", value: 11 },
+    { time: "12 PM", value: 12 },
+    { time: "1 PM", value: 13 },
+    { time: "2 PM", value: 14 },
+    { time: "3 PM", value: 15 },
+    { time: "4 PM", value: 16 },
+    { time: "5 PM", value: 17 },
+    { time: "6 PM", value: 18 },
+    { time: "7 PM", value: 19 },
+    { time: "8 PM", value: 20 },
+    { time: "9 PM", value: 21 },
+    { time: "10 PM", value: 22 },
+    { time: "11 PM", value: 23 },
+  ]
